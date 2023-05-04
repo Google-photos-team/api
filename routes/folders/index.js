@@ -1,20 +1,14 @@
 const express = require('express');
 const router = express.Router();
-router.get('/', (req, res) => {
-    res.send("HELLO WORLD");
-})
+// controllers
+const { FoldersController } = require('../../controllers');
 
-router.post('/delete', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.get('/', FoldersController.getFolders)
 
-router.post('/create', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/delete', FoldersController.deleteFolders)
 
-// GET LIST OF IMAGES => in requirement documentation section #Images
-router.post('/:folderId', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/create', FoldersController.createFolder)
+
+router.post('/:folderId', FoldersController.getFolderImages)
 
 module.exports = router

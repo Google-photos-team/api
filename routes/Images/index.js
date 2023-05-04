@@ -1,19 +1,14 @@
 const express = require('express');
 const router = express.Router();
-router.get('/delete', (req, res) => {
-    res.send("HELLO WORLD");
-})
+// controllers
+const { ImagesController } = require('../../controllers');
 
-router.post('/move', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.get('/delete', ImagesController.deleteImages)
 
-router.post('/create', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/move', ImagesController.moveImages)
 
-router.post('/find', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/create', ImagesController.createImage)
+
+router.post('/find', ImagesController.findImages)
 
 module.exports = router

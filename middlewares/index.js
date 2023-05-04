@@ -8,7 +8,7 @@ module.exports = (app) => {
 
     app.use((req, res, next) => {
         if (!req.url.startsWith("/auth")) {
-            // TODO: Check on the auth token
+            // TODO: Check on the auth token and get the user_id then add header in request include the user id
         }
         next();
     })

@@ -1,19 +1,14 @@
 const express = require('express');
 const router = express.Router();
-router.post('/signup', (req, res) => {
-    res.send("HELLO WORLD");
-})
+// controllers
+const { AuthController } = require('../../controllers');
 
-router.post('/login', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/signup', AuthController.signup)
 
-router.post('/logout', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/login', AuthController.login)
 
-router.post('/reset-password', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.post('/logout', AuthController.logout)
+
+router.post('/reset-password', AuthController.resetPassword)
 
 module.exports = router

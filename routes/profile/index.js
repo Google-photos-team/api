@@ -1,16 +1,12 @@
 const express = require('express');
 const router = express.Router();
+// controllers
+const { ProfileController } = require('../../controllers');
 
-router.post('/delete', (req, res) => {
-    res.send("HELLO WORLD from delete profile");
-})
+router.post('/delete', ProfileController.deleteProfile)
 
-router.post('/update', (req, res) => {
-    res.send("HELLO WORLD from update profile");
-})
+router.post('/update', ProfileController.updateProfile)
 
-router.get('/:userId', (req, res) => {
-    res.send("HELLO WORLD");
-})
+router.get('/:userId', ProfileController.getProfile)
 
 module.exports = router
