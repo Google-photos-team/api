@@ -3,6 +3,7 @@ const express = require('express');
 
 const middlewares = require('./middlewares');
 const routes = require('./routes');
+const connectToMongoDB_andStartTheServer = require('./db/connect');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -10,7 +11,4 @@ const PORT = process.env.PORT || 8080;
 middlewares(app);
 routes(app);
 
-
-app.listen(PORT, () => {
-    console.log(`server now is live on port ${PORT} ✨`)
-})
+connectToMongoDB_andStartTheServer(app)
