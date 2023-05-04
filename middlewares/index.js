@@ -7,7 +7,7 @@ module.exports = (app) => {
     app.use(bodyParser.urlencoded({ extended: true }));
 
     app.use((req, res, next) => {
-        if (!req.url.startswith("/auth")) {
+        if (!req.url.startsWith("/auth")) {
             // TODO: Check on the auth token
         }
         next();
