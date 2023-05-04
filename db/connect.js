@@ -12,7 +12,6 @@ module.exports = (app) => {
             });
         })
         .catch((err) => {
-            console.error(err)
             console.log("Something went wrong with the database connection");
         });
 }
