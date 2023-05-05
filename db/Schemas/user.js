@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
   name: String,
-  passowrd: String, // hashed password
+  password: String, // hashed password
   avatar: String, // base64
   folders: {
     type: [mongoose.SchemaTypes.ObjectId],
