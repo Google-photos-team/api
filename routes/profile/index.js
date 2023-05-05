@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const verifyToken = require('../../helpers/verifyToken');
 // controllers
 const { ProfileController } = require('../../controllers');
 
-router.post('/delete', ProfileController.deleteProfile)
+router.delete('user/delete/:id',verifyToken, ProfileController.deleteProfile)
 
-router.post('/update', ProfileController.updateProfile)
+router.post('user/update/:id',verifyToken, ProfileController.updateProfile)
 
-router.get('/:userId', ProfileController.getProfile)
+router.get('user/:id',verifyToken, ProfileController.getProfile)
 
 module.exports = router
