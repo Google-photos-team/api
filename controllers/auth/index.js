@@ -47,6 +47,7 @@ const signup = async (req, res, next) => {
             err.name = "exist_user"
             throw err;
         }
+
         await signupSchema.validate({
             username,
             password
