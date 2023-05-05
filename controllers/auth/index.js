@@ -1,11 +1,40 @@
-const User = require("../../db/Schemas/user")
+const User = require("../../db/Schemas/user");
+const generateToken = require("../../helpers/generateToken");
 const { signupSchema } = require("../../utils/validation")
 const sha256 = require('js-sha256').sha256
 
 // ! CHECK THE REQUIREMENT DOCUMENT TO KNOW THE REQUEST AND RESPONSE SCHEMAS
 
-const login = (req, res, next) => {
+const login = async (req, res, next) => {
     // TODO: Check the db if the username and password exists or not then response
+    const {name, password} = req.body;
+    try{
+        const user = await User.findOne({name,password:sha256(password)});
+
+        if(!user){
+            const err = new Error("USERNAME_OR_PASSWORD_IS_WRONG");
+            err.name = "WRONG_INPUTS" 
+        }
+
+        const token = await generateToken({id:user._id});
+        res.json({
+            token,
+            username: user.name,
+            avatar: user.avatar,
+        })
+    }catch (error){
+        if(error.name === "WRONG_INPUTS"){
+            res.status(400).json({
+                type: error.name,
+                data: error.message
+            })
+        }else{
+            res.status(404).json({
+                type: "unknow_error",
+                data: "something went wrong"
+            })
+        }
+    }
 }
 
 const signup = async (req, res, next) => {
@@ -48,6 +77,11 @@ const signup = async (req, res, next) => {
             res.status(400).json({
                 type: error.name,
                 data: error.message
+            })
+        }else{
+            res.status(404).json({
+                type: "unknow_error",
+                data: "something went wrong"
             })
         }
     }
