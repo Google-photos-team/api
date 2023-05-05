@@ -7,28 +7,28 @@ const sha256 = require('js-sha256').sha256
 
 const login = async (req, res, next) => {
     // TODO: Check the db if the username and password exists or not then response
-    const {name, password} = req.body;
-    try{
-        const user = await User.findOne({name,password:sha256(password)});
+    const { username, password } = req.body;
+    try {
+        const user = await User.findOne({ username, password: sha256(password) });
 
-        if(!user){
+        if (!user) {
             const err = new Error("USERNAME_OR_PASSWORD_IS_WRONG");
-            err.name = "WRONG_INPUTS" 
+            err.name = "WRONG_INPUTS"
         }
 
-        const token = await generateToken({id:user._id});
+        const token = await generateToken({ id: user._id });
         res.json({
             token,
-            username: user.name,
+            username: user.username,
             avatar: user.avatar,
         })
-    }catch (error){
-        if(error.name === "WRONG_INPUTS"){
+    } catch (error) {
+        if (error.name === "WRONG_INPUTS") {
             res.status(400).json({
                 type: error.name,
                 data: error.message
             })
-        }else{
+        } else {
             res.status(404).json({
                 type: "unknow_error",
                 data: "something went wrong"
@@ -39,31 +39,31 @@ const login = async (req, res, next) => {
 
 const signup = async (req, res, next) => {
     // TODO: Check the db if the username used or not then if not create new user
-    const {name, password} = req.body;
-    try{
-        const used = await User.exists({ name })
-        if(used){
+    const { username, password } = req.body;
+    try {
+        const used = await User.exists({ username })
+        if (used) {
             const err = new Error("USER_ALREADY_EXIST")
-            err.name = "exist_user" 
+            err.name = "exist_user"
             throw err;
         }
         await signupSchema.validate({
-            name,
+            username,
             password
-        },{abortEarly: false})
+        }, { abortEarly: false })
         const user = await User.create({
-            name,
+            username,
             password: sha256(password),
-            avatar:"",
+            avatar: "",
             folders: [],
-            images:[],
+            images: [],
         })
 
         res.json({
             data: user
         })
-    }catch (error){
-        if(error.name === "ValidationError"){
+    } catch (error) {
+        if (error.name === "ValidationError") {
             const errs = {};
             error.inner.forEach(({ message, params }) => {
                 errs[params.path] = message;
@@ -73,12 +73,12 @@ const signup = async (req, res, next) => {
                 type: error.name,
                 data: errs,
             })
-        }else if(error.name === "exist_user"){
+        } else if (error.name === "exist_user") {
             res.status(400).json({
                 type: error.name,
                 data: error.message
             })
-        }else{
+        } else {
             res.status(404).json({
                 type: "unknow_error",
                 data: "something went wrong"
