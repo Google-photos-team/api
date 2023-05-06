@@ -3,4 +3,8 @@ const RESPONSE_STATUS = {
     FAILED: "FAILED"
 }
 
-module.exports = RESPONSE_STATUS;
+const RESPONSE_STATUS_USER = {
+    SUCCESS: "This's the user "
+}
+
+module.exports = {RESPONSE_STATUS,RESPONSE_STATUS_USER};
