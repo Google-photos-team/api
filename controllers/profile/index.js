@@ -16,7 +16,7 @@ const getProfile = async (req, res, next) => {
     if (user) {
       return res.status(200).json(user);
     } else {
-      return res.status(404).json({ message: "user not found" });
+      return res.status(400).json({ message: "user not found" });
     }
   } catch (error) {
       console.log(error)
@@ -40,7 +40,7 @@ const deleteProfile = async (req, res, next) => {
         .json({ message: "user has been delete successfully" });
     } else {
       console.log("not exist");
-      return res.status(404).json({ message: "user not found" });
+      return res.status(400).json({ message: "user not found" });
     }
   } catch (error) {
     console.log(error)

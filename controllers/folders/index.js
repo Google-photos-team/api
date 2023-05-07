@@ -37,7 +37,7 @@ const getFolderImages = async (req, res, next) => {
         const folder = await Folder.findOne({ user_id, _id: folder_id }).populate("images");
 
         if (!folder) {
-            return res.status(404).json({
+            return res.status(400).json({
                 status: RESPONSE_STATUS.FAILED,
                 error: "folder not exist in the database"
             })
