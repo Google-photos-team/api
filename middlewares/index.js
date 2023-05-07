@@ -8,7 +8,7 @@ module.exports = (app) => {
     app.use(bodyParser.urlencoded({ extended: true }));
 
     app.use(async (req, res, next) => {
-        if (!req.url.startsWith("/auth") || req.url.startsWith("/auth/reset-password")) {
+        if (!req.url.startsWith("/auth") || req.url.startsWith("/auth/reset-password") || req.url.startsWith("/auth/token")) {
             // TODO: Check on the auth token and get the user_id then add header in request include the user id
             try{
                 const token = req.headers.authorization?.split(" ")[1];
