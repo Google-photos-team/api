@@ -9,6 +9,8 @@ router.post('/move', ImagesController.moveImages)
 
 router.post('/create', ImagesController.createImage)
 
-router.post('/find', ImagesController.findImages)
+router.get('/find', ImagesController.findImages)
+
+router.get('/find/:value', ImagesController.findImages)
 
 module.exports = router
