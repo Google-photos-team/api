@@ -86,8 +86,29 @@ const moveImages = (req, res, next) => {
     // TODO: move list of images using req.body.images array of ids from the target_folder to the destination_folder
 }
 
-const findImages = (req, res, next) => {
+const findImages = async(req, res, next) => {
     // TODO: find list of images using the search query and images tags
+    try{
+        const { user_id } = req;
+        const { value } = req.params || "";
+        const regex = new RegExp(value, 'i')
+        const user = await User.findById(user_id).populate({ path: "images" });
+        
+        const matchingImages = user.images.filter(image => {
+            const nameMatches = image.name.match(regex);
+            const tagsMatch = image.tags.some(tag => tag.match(regex));
+            return nameMatches || tagsMatch;
+        });
+
+        res.json({
+            images: matchingImages
+        })
+    }catch(error){
+        res.status(400).json({
+            type: "unknow_error",
+            data: "something went wrong"
+        })
+    }
 }
 
 module.exports = {
