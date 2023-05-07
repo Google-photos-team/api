@@ -5,14 +5,14 @@ const Image = require('../../db/Schemas/image');
 const Folder = require('../../db/Schemas/folder');
 const User = require('../../db/Schemas/user');
 
-const { imageSchema } = require('../../utils/validation');
+const { imageValidation } = require('../../utils/validation');
 
 const createImage = async (req, res, next) => {
     // TODO: create a new image and save it with the user preferred upload quality using sharp
     try {
         const { user_id } = req;
         const { folder_id, name, tags, image } = req.body;
-        await imageSchema.validate({
+        await imageValidation.imageSchema.validate({
             folder_id, name, tags, image
         }, { abortEarly: false })
         if (!mongoose.Types.ObjectId.isValid(folder_id)) {
@@ -26,14 +26,14 @@ const createImage = async (req, res, next) => {
         const user = await User.findById(user_id);
 
         if (!user) {
-            return res.status(404).json({
+            return res.status(400).json({
                 status: RESPONSE_STATUS.FAILED,
                 error: "user id not exist in the database"
             })
         }
 
         if (!folder) {
-            return res.status(404).json({
+            return res.status(400).json({
                 status: RESPONSE_STATUS.FAILED,
                 error: "folder id not exist in the database"
             })
