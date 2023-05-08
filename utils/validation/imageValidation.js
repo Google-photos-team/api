@@ -7,6 +7,13 @@ const imageSchema = yup.object({
   tags: yup.array().of(yup.string()).required("Image tags field is required"),
 })
 
+const moveImageSchema = yup.object({
+  source_folder_id: yup.string().required("Source folder id is required"),
+  destination_folder_id: yup.string().required("Destination folder id is required"),
+  images: yup.array().of(yup.string()).required("Images ids is required").min(1 , "at least move one image"),
+})
+
 module.exports = {
-  imageSchema
+  imageSchema,
+  moveImageSchema
 }

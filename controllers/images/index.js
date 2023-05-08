@@ -78,12 +78,157 @@ const createImage = async (req, res, next) => {
     }
 }
 
-const deleteImages = (req, res, next) => {
+const deleteImages = async (req, res, next) => {
     // TODO: delete list of images using req.body.images array of ids
+
+    try {
+        const { user_id } = req;
+        const { images, folder_id } = req.body;
+        // validation on folder_id
+        if (!folder_id) {
+            return res.status(400).send({
+                status: RESPONSE_STATUS.FAILED,
+                error: "folder id is required"
+            })
+        }
+
+        if (!images) {
+            return res.status(400).send({
+                status: RESPONSE_STATUS.FAILED,
+                error: "images ids is required"
+            })
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(folder_id)) {
+            return res.status(400).send({
+                status: RESPONSE_STATUS.FAILED,
+                error: "invalid folder id"
+            })
+        }
+
+        // delete images from user list
+        const user = await User.findById(user_id);
+        user.images = [...user.images.filter(id => !images.includes(id.toString()))];
+        await user.save();
+
+        // delete images from Image store
+        const deletedImages = await Image.deleteMany({ folder_id, _id: { $in: images } });
+
+        // delete images ids from the folder document images list
+        const folder = await Folder.findById(folder_id);
+        folder.images = [...folder.images.filter(id => !images.includes(id.toString()))];
+        folder.save();
+
+        res.status(200).json({
+            status: RESPONSE_STATUS.SUCCESS,
+            data: deletedImages
+        })
+    } catch (error) {
+        if (error.name === "CastError") {
+            return res.status(400).send({
+                status: RESPONSE_STATUS.FAILED,
+                error: "invalid folder id in the delete ids list"
+            })
+        }
+
+        console.log(error);
+        res.status(500).send({
+            status: RESPONSE_STATUS.FAILED,
+            error: "something went wrong"
+        })
+    }
 }
 
-const moveImages = (req, res, next) => {
+
+/*  
+    ! MOVE STEPS
+    * 1. validation
+    * 2. find source folder
+    * 3. find destination folder
+    * 4. move imagesToMove ids from source to destination list
+    * 5. update all images in imagesToMove array change folder_id reference from source to destination id
+*/
+
+const moveImages = async (req, res, next) => {
     // TODO: move list of images using req.body.images array of ids from the target_folder to the destination_folder
+    try {
+        const { user_id } = req;
+        const { images, destination_folder_id, source_folder_id } = req.body;
+
+        await imageValidation.moveImageSchema.validate({
+            images,
+            destination_folder_id,
+            source_folder_id
+        }, { abortEarly: false })
+
+        if (!mongoose.Types.ObjectId.isValid(destination_folder_id)) {
+            return res.status(400).send({
+                status: RESPONSE_STATUS.FAILED,
+                error: "Invalid destination folder id"
+            })
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(source_folder_id)) {
+            return res.status(400).send({
+                status: RESPONSE_STATUS.FAILED,
+                error: "Invalid source folder id"
+            })
+        }
+
+        const sourceFolder = await Folder.findOne({ user_id, _id: source_folder_id }).exec();
+        const destinationFolder = await Folder.findOne({ user_id, _id: destination_folder_id }).exec();
+        if (!sourceFolder) {
+            return res.status(404).json({
+                status: RESPONSE_STATUS.FAILED,
+                error: "Source folder not exist in the database"
+            })
+        }
+
+        if (!destinationFolder) {
+            return res.status(404).json({
+                status: RESPONSE_STATUS.FAILED,
+                error: "Destination folder not exist in the database"
+            })
+        }
+
+        console.log({ sourceFolder: sourceFolder })
+        sourceFolder.images = [...sourceFolder.images?.filter(id => !images.includes(id.toString()))];
+        destinationFolder.images = [
+            ...destinationFolder.images,
+            ...images.map(id => new mongoose.Types.ObjectId(id))
+        ];
+
+        sourceFolder.save();
+        destinationFolder.save();
+
+        const MovedImages = await Image.updateMany(
+            { _id: { $in: images } },
+            { folder_id: new mongoose.Types.ObjectId(destination_folder_id) }
+        );
+
+        return res.status(200).json({
+            status: RESPONSE_STATUS.SUCCESS,
+            data: MovedImages
+        })
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            const errs = {};
+            error.inner.forEach(({ message, params }) => {
+                errs[params.path] = message;
+            });
+
+            return res.status(400).json({
+                status: RESPONSE_STATUS.FAILED,
+                errors: errs,
+            })
+        }
+
+        console.log(error);
+        res.status(500).send({
+            status: RESPONSE_STATUS.FAILED,
+            error: "something went wrong"
+        })
+    }
 }
 
 const findImages = async(req, res, next) => {
