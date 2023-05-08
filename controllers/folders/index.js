@@ -1,7 +1,7 @@
 // ! CHECK THE REQUIREMENT DOCUMENT TO KNOW THE REQUEST AND RESPONSE SCHEMAS
 const mongoose = require('mongoose');
 
-const RESPONSE_STATUS = require('../../constants/status');
+const { RESPONSE_STATUS } = require('../../constants/status');
 const Folder = require('../../db/Schemas/folder');
 const User = require('../../db/Schemas/user');
 const Image = require('../../db/Schemas/image');
@@ -37,7 +37,7 @@ const getFolderImages = async (req, res, next) => {
         const folder = await Folder.findOne({ user_id, _id: folder_id }).populate("images");
 
         if (!folder) {
-            return res.status(400).json({
+            return res.status(404).json({
                 status: RESPONSE_STATUS.FAILED,
                 error: "folder not exist in the database"
             })
@@ -91,7 +91,7 @@ const deleteFolders = async (req, res, next) => {
                 error: "invalid folder id in the delete ids list"
             })
         }
-        
+
         console.log(error);
         res.status(500).send({
             status: RESPONSE_STATUS.FAILED,
