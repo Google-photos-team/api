@@ -77,8 +77,12 @@ const signup = async (req, res, next) => {
             images: [],
         })
 
+        const token = await generateToken({ id: user._id });
+
         res.json({
-            data: user
+            token,
+            username: user.username,
+            avatar: user.avatar,
         })
     } catch (error) {
         if (error.name === "ValidationError") {
