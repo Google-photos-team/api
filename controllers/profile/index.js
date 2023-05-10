@@ -14,17 +14,21 @@ const getProfile = async (req, res, next) => {
   // TODO: get user profile using user_id
   try {
     const { user_id } = req;
-    const user = await User.findById(user_id);
-    res.status(200).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      username: user.username,
-      avatar: user.avatar,
-      images:user.images
-    }).end()
-} catch (error) {
-    console.log(error);
-    res.status(500).send({ message: "something went wrong" })
-}
+
+    const user = await User.findById(user_id).select("-password").populate({path:"profile"});
+    res.status(200)
+      .json({
+        status:RESPONSE_STATUS_USER.SUCCESS,
+      }).end()
+    if (user) {
+      return res.status(200).json(user);
+    } else {
+      return res.status(400).json({ message: "user not found" });
+    }
+  } catch (error) {
+      console.log(error)
+      res.status(500).send({message:"something went wrong"})
+  }
 };
 
 
@@ -36,15 +40,6 @@ const getProfile = async (req, res, next) => {
 const deleteProfile = async (req, res, next) => {
   // TODO: delete user profile using user_id
   try {
-    await User.findOneAndRemove({ _id: req.user_id});
-    res.json({
-      status: RESPONSE_STATUS.SUCCESS, 
-      msg: 'User profile deleted', 
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
 
 };
 

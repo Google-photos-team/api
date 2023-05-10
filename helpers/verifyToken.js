@@ -5,7 +5,8 @@ const verifyToken = (token) =>
     verify(token, process.env.SECRET_KEY, (err, decoded) => {
       if (err) {
         err.name = "INVALID";
-        err.message = "INVALID_TOKEN"
+        err.message = "INVALID_TOKEN";
+        err.status = 400;
         reject(err)
       } else {
         resolve(decoded.id)

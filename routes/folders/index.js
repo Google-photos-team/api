@@ -9,6 +9,6 @@ router.post('/delete', FoldersController.deleteFolders)
 
 router.post('/create', FoldersController.createFolder)
 
-router.post('/:folderId', FoldersController.getFolderImages)
+router.get('/:id', FoldersController.getFolderImages)
 
 module.exports = router
