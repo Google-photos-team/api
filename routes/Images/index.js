@@ -3,7 +3,7 @@ const router = express.Router();
 // controllers
 const { ImagesController } = require('../../controllers');
 
-router.get('/delete', ImagesController.deleteImages)
+router.post('/delete', ImagesController.deleteImages)
 
 router.post('/move', ImagesController.moveImages)
 
