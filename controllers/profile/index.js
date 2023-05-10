@@ -1,82 +1,98 @@
-const { RESPONSE_STATUS_USER } = require("../../constants/status");
+const Folder = require("../../db/Schemas/folder");
+const Image = require("../../db/Schemas/image");
 const User = require("../../db/Schemas/user");
-const bcrypt = require("bcryptjs");
+const { profileValidation } = require("../../utils/validation");
+const mongoose = require("mongoose");
 
 // ! CHECK THE REQUIREMENT DOCUMENT TO KNOW THE REQUEST AND RESPONSE SCHEMAS
+
 //getProfile
 const getProfile = async (req, res, next) => {
-  // TODO: get user profile using user_id
-  try {
-    const { user_id } = req;
-    const user = await User.findById(user_id).select("-password").populate({path:"profile"});
-    res.status(200)
-      .json({
-        status:RESPONSE_STATUS_USER.SUCCESS,
-      }).end()
-    if (user) {
-      return res.status(200).json(user);
-    } else {
-      return res.status(400).json({ message: "user not found" });
-    }
-  } catch (error) {
-      console.log(error)
-      res.status(500).send({message:"something went wrong"})
+  const { user_id } = req;
+  try{
+    const user = await User.findById(user_id ,"username avatar");
+    res.json({
+      user
+    });
+  }catch(error){
+    res.status(400).send({message:"something went wrong"});
   }
 };
 
 //deleteProfile
 const deleteProfile = async (req, res, next) => {
-  // TODO: delete user profile using user_id
+  const { user_id } = req;
 
-  try {
-    const { user_id } = req;
-    console.log(user_id);
-    const user = await User.findById(user_id).select("-password");
-    if (user) {
-      console.log("exist");
-      await User.findByIdAndDelete(user_id);
-      return res
-        .status(200)
-        .json({ message: "user has been delete successfully" });
-    } else {
-      console.log("not exist");
-      return res.status(400).json({ message: "user not found" });
-    }
-  } catch (error) {
-    console.log(error)
-    res.status(500).send({message:"something went wrong"})  }
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try{
+    const opts = { session, new: true };
+    await User.findByIdAndDelete(user_id, opts);
+    await Folder.deleteMany({ user_id }, opts);
+    await Image.deleteMany({ user_id }, opts);
+
+    await session.commitTransaction();
+    session.endSession();
+    
+    res.status(200).json({
+      status: "user deleted successfully",
+    })
+  } catch(error){
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).send({message:"something went wrong"});
+  }
 };
 
 //updateProfile
 const updateProfile = async (req, res, next) => {
-  try {
-    // TODO: update user profile using user_id
-    const { user_id } = req;
-    const { error } = validateUpdateUser(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+  const { user_id } = req;
+  const { username, avatar } = req.body;
+
+  try{
+    const user = await User.findById(user_id, "username avatar");
+
+    if(username && username !== user.username){
+      const used = await User.exists({ username });
+      if (used) {
+        const err = new Error("USER_ALREADY_EXIST")
+        err.name = "exist_user"
+        throw err;
+      }
+
+      await profileValidation.updateSchema.validate({ username }, { abortEarly: false });
     }
 
-    if (req.body.password) {
-      const salt = await bcrypt.genSalt(10);
-      req.body.password = await bcrypt.hash(req.body.password, salt);
+    const values = {};
+    if(username && username !== user.username) values.username = username;
+    if(typeof avatar === "string" && avatar !== user.avatar) values.avatar = avatar;
+    
+    const updatedUser = await User.findByIdAndUpdate(user_id, values, { new: true });
+
+    res.json({
+      username: updatedUser.username,
+      avatar: updatedUser.avatar,
+    });
+  }catch(error){
+    if (error.name === "ValidationError") {
+      const errs = {};
+      error.inner.forEach(({ message, params }) => {
+          errs[params.path] = message;
+      });
+
+      res.status(400).json({
+          type: error.name,
+          data: errs,
+      })
+    } else if (error.name === "exist_user") {
+        res.status(400).json({
+            type: error.name,
+            data: error.message
+        })
+    } else {
+      res.status(400).send({message:"something went wrong"});
     }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      user_id,
-      {
-        $set: {
-          username: req.body.username,
-          password: req.body.password,
-        },
-      },
-      { new: true }
-    ).select("-password");
-
-    return res.status(200).json(updatedUser);
-  } catch (error) {
-    console.log(error)
-    res.status(500).send({message:"something went wrong"})
   }
 };
 

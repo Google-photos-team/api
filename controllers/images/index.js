@@ -43,7 +43,8 @@ const createImage = async (req, res, next) => {
             folder_id,
             name,
             tags,
-            image
+            image,
+            user_id
         })
 
         folder.images = [...folder.images, imageInstance._id];
