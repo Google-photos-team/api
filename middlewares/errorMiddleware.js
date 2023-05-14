@@ -1,7 +1,7 @@
-const errorMiddleware = (err, req, res, next) =>{
+const errorMiddleware = (err, req, res, next) => {
   res.status(err.status).json({
     type: err.name,
-    data: err.message
+    error: err.message
   })
 }
 
