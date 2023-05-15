@@ -2,7 +2,6 @@
 const mongoose = require('mongoose');
 const createHttpError = require("http-errors");
 
-const { RESPONSE_STATUS } = require('../../constants/status');
 const Folder = require('../../db/Schemas/folder');
 const User = require('../../db/Schemas/user');
 const Image = require('../../db/Schemas/image');
