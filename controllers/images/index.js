@@ -177,18 +177,44 @@ const findImages = async (req, res, next) => {
 
         res.json({
             status: true,
-            data: {
-                images: matchingImages
-            }
+            data: matchingImages
         })
     } catch (error) {
         return next(createHttpError(500, error.message))
     }
 }
 
+const findImageById = async (req, res, next) => {
+    // TODO: find list of images using the search query and images tags
+    try {
+        const { user_id } = req;
+        const { id: image_id } = req.params || "";
+
+        if (!mongoose.Types.ObjectId.isValid(image_id)) {
+            return next(createHttpError(400, "Invalid image id"))
+        }
+
+        const image = await Image.findById(image_id);
+        if (!image) {
+            return next(createHttpError(404, "image not found"))
+        }
+
+        return res.json({
+            status: true,
+            data: image
+        })
+    } catch (error) {
+        return next(createHttpError(500, error.message))
+    }
+}
+
+
+
+
 module.exports = {
     createImage,
     deleteImages,
     moveImages,
-    findImages
+    findImages,
+    findImageById
 }
