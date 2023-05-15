@@ -78,8 +78,11 @@ const token = async (req, res, next) => {
     try {
         const user = await User.findById(req.user_id);
         return res.json({
-            username: user.username,
-            avatar: user.avatar,
+            status: true,
+            data: {
+                username: user.username,
+                avatar: user.avatar,
+            }
         })
     } catch (error) {
         return next(createHttpError(500, error.message))

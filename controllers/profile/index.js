@@ -1,21 +1,27 @@
+const createHttpError = require("http-errors");
+const mongoose = require("mongoose");
+
 const Folder = require("../../db/Schemas/folder");
 const Image = require("../../db/Schemas/image");
 const User = require("../../db/Schemas/user");
 const { profileValidation } = require("../../utils/validation");
-const mongoose = require("mongoose");
 
 // ! CHECK THE REQUIREMENT DOCUMENT TO KNOW THE REQUEST AND RESPONSE SCHEMAS
-
 //getProfile
 const getProfile = async (req, res, next) => {
   const { user_id } = req;
-  try{
-    const user = await User.findById(user_id ,"username avatar");
+  try {
+    const user = await User.findById(user_id, "username avatar");
+    if (!user) {
+      return next(createHttpError(404, "invalid token"))
+    }
+
     res.json({
-      user
+      status: true,
+      data: user
     });
-  }catch(error){
-    res.status(400).send({message:"something went wrong"});
+  } catch (error) {
+    return next(createHttpError(500, error.message))
   }
 };
 
@@ -26,7 +32,7 @@ const deleteProfile = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
-  try{
+  try {
     const opts = { session, new: true };
     await User.findByIdAndDelete(user_id, opts);
     await Folder.deleteMany({ user_id }, opts);
@@ -34,14 +40,14 @@ const deleteProfile = async (req, res, next) => {
 
     await session.commitTransaction();
     session.endSession();
-    
+
     res.status(200).json({
-      status: "user deleted successfully",
+      status: true,
     })
-  } catch(error){
+  } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(400).send({message:"something went wrong"});
+    return next(createHttpError(500, error.message))
   }
 };
 
@@ -50,49 +56,43 @@ const updateProfile = async (req, res, next) => {
   const { user_id } = req;
   const { username, avatar } = req.body;
 
-  try{
+  try {
     const user = await User.findById(user_id, "username avatar");
+    profileValidation.updateSchema.validate({ username })
+      .then(async () => {
+        // first condition to check if the username not updated so we don't mack DB query
+        if (username && username !== user.username) {
+          const isExist = await User.exists({ username });
+          if (isExist) {
+            return next(createHttpError(409, "user already exist"))
+          }
+        }
 
-    if(username && username !== user.username){
-      const used = await User.exists({ username });
-      if (used) {
-        const err = new Error("USER_ALREADY_EXIST")
-        err.name = "exist_user"
-        throw err;
-      }
+        const newValues = {};
+        if (username && username !== user.username) {
+          newValues.username = username
+        };
 
-      await profileValidation.updateSchema.validate({ username }, { abortEarly: false });
-    }
+        if (typeof avatar === "string" && avatar !== user.avatar) {
+          newValues.avatar = avatar
+        };
 
-    const values = {};
-    if(username && username !== user.username) values.username = username;
-    if(typeof avatar === "string" && avatar !== user.avatar) values.avatar = avatar;
-    
-    const updatedUser = await User.findByIdAndUpdate(user_id, values, { new: true });
+        const updatedUser = await User.findByIdAndUpdate(user_id, newValues, { new: true });
 
-    res.json({
-      username: updatedUser.username,
-      avatar: updatedUser.avatar,
-    });
-  }catch(error){
-    if (error.name === "ValidationError") {
-      const errs = {};
-      error.inner.forEach(({ message, params }) => {
-          errs[params.path] = message;
+        res.json({
+          status: true,
+          data: {
+            username: updatedUser.username,
+            avatar: updatedUser.avatar,
+          }
+        });
+      }).catch((error) => {
+        return next(createHttpError(400, error))
       });
 
-      res.status(400).json({
-          type: error.name,
-          data: errs,
-      })
-    } else if (error.name === "exist_user") {
-        res.status(400).json({
-            type: error.name,
-            data: error.message
-        })
-    } else {
-      res.status(400).send({message:"something went wrong"});
-    }
+
+  } catch (error) {
+    return next(createHttpError(500, error.message))
   }
 };
 
