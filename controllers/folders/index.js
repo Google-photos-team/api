@@ -91,10 +91,6 @@ const createFolder = async (req, res, next) => {
             return next(createHttpError(400, "folder name is required"))
         }
 
-        if (!new RegExp(/^[a-zA-Z0-9_\-]+$/g).test(name)) {
-            return next(createHttpError(400, "folder name can include only characters, underscores (_), and hyphens (-)"))
-        }
-
         const exist = await Folder.exists({ user_id, name });
         if (exist) {
             return next(createHttpError(409, "folder name already used"))
