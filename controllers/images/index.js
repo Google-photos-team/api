@@ -1,6 +1,5 @@
 // ! CHECK THE REQUIREMENT DOCUMENT TO KNOW THE REQUEST AND RESPONSE SCHEMAS
 const mongoose = require('mongoose');
-const { RESPONSE_STATUS } = require('../../constants/status');
 const Image = require('../../db/Schemas/image');
 const Folder = require('../../db/Schemas/folder');
 const User = require('../../db/Schemas/user');
