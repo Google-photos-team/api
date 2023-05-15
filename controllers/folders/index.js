@@ -1,5 +1,6 @@
 // ! CHECK THE REQUIREMENT DOCUMENT TO KNOW THE REQUEST AND RESPONSE SCHEMAS
 const mongoose = require('mongoose');
+const createHttpError = require("http-errors");
 
 const { RESPONSE_STATUS } = require('../../constants/status');
 const Folder = require('../../db/Schemas/folder');
@@ -11,13 +12,12 @@ const getFolders = async (req, res, next) => {
     try {
         const { user_id } = req;
         const user = await User.findById(user_id).populate({ path: "folders" });
-        res.status(200).json({
-            status: RESPONSE_STATUS.SUCCESS,
-            folders: user.folders || []
-        }).end()
+        return res.json({
+            status: true,
+            data: user.folders || []
+        })
     } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: "something went wrong" })
+        return next(createHttpError(500, error.message))
     }
 }
 
@@ -28,30 +28,21 @@ const getFolderImages = async (req, res, next) => {
         const { user_id } = req;
 
         if (!mongoose.Types.ObjectId.isValid(folder_id)) {
-            return res.status(400).send({
-                status: RESPONSE_STATUS.FAILED,
-                error: "invalid folder id"
-            })
+            return next(createHttpError(400, "invalid folder id"))
         }
 
         const folder = await Folder.findOne({ user_id, _id: folder_id }).populate("images");
 
         if (!folder) {
-            return res.status(404).json({
-                status: RESPONSE_STATUS.FAILED,
-                error: "folder not exist in the database"
-            })
+            return next(createHttpError(404, "folder not exist in the database"))
         }
-        return res.status(200).json({
-            status: RESPONSE_STATUS.SUCCESS,
+
+        return res.json({
+            status: true,
             data: folder?.images || []
         })
     } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            status: RESPONSE_STATUS.FAILED,
-            error: "something went wrong"
-        })
+        return next(createHttpError(500, error.message))
     }
 }
 
@@ -80,23 +71,15 @@ const deleteFolders = async (req, res, next) => {
         // DELETE folders documents for Folder collection
         const deletedFolders = await Folder.deleteMany({ user_id, _id: { $in: folders } });
 
-        res.status(200).json({
-            status: RESPONSE_STATUS.SUCCESS,
+        res.json({
+            status: true,
             data: deletedFolders
         })
     } catch (error) {
         if (error.name === "CastError") {
-            return res.status(400).send({
-                status: RESPONSE_STATUS.FAILED,
-                error: "invalid folder id in the delete ids list"
-            })
+            return next(createHttpError(400, "invalid folder id in the delete ids list"))
         }
-
-        console.log(error);
-        res.status(500).send({
-            status: RESPONSE_STATUS.FAILED,
-            error: "something went wrong"
-        })
+        return next(createHttpError(500, error.message))
     }
 }
 
@@ -106,28 +89,16 @@ const createFolder = async (req, res, next) => {
         const { user_id } = req;
         const { name } = req.body;
         if (!name) {
-            res.status(400).json({
-                status: RESPONSE_STATUS.FAILED,
-                error: "folder name is required"
-            })
-            res.end();
+            return next(createHttpError(400, "folder name is required"))
+        }
 
-            if (!new RegExp(/^[a-zA-Z0-9_\-]+$/g).test(name)) {
-                res.status(400).json({
-                    status: RESPONSE_STATUS.FAILED,
-                    error: "folder name can include only characters, underscores (_), and hyphens (-)"
-                });
-                res.end();
-            }
+        if (!new RegExp(/^[a-zA-Z0-9_\-]+$/g).test(name)) {
+            return next(createHttpError(400, "folder name can include only characters, underscores (_), and hyphens (-)"))
         }
 
         const exist = await Folder.exists({ user_id, name });
         if (exist) {
-            res.status(400).json({
-                status: RESPONSE_STATUS.FAILED,
-                error: "folder name already used"
-            })
-            res.end();
+            return next(createHttpError(409, "folder name already used"))
         } else {
             const folder = await Folder.create({
                 name,
@@ -140,17 +111,13 @@ const createFolder = async (req, res, next) => {
             console.log({ user })
             await user.save();
 
-            res.status(200).json({
-                status: RESPONSE_STATUS.SUCCESS,
+            res.json({
+                status: true,
                 data: folder
-            }).end();
+            });
         }
     } catch (error) {
-        console.log({ error })
-        res.status(500).send({
-            status: RESPONSE_STATUS.FAILED,
-            error: "something went wrong"
-        })
+        return next(createHttpError(500, error.message))
     }
 }
 
