@@ -176,7 +176,10 @@ const findImages = async (req, res, next) => {
         });
 
         res.json({
-            images: matchingImages
+            status: true,
+            data: {
+                images: matchingImages
+            }
         })
     } catch (error) {
         return next(createHttpError(500, error.message))
