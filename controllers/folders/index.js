@@ -47,6 +47,9 @@ const getFolderImages = async (req, res, next) => {
 
 const deleteFolders = async (req, res, next) => {
     // TODO: delete list of folders using req.body.folders array of ids
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { user_id } = req;
         const { folders } = req.body;
@@ -70,11 +73,17 @@ const deleteFolders = async (req, res, next) => {
         // DELETE folders documents for Folder collection
         const deletedFolders = await Folder.deleteMany({ user_id, _id: { $in: folders } });
 
+        await session.commitTransaction();
+        session.endSession();
+
         res.json({
             status: true,
             data: deletedFolders
         })
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+
         if (error.name === "CastError") {
             return next(createHttpError(400, "invalid folder id in the delete ids list"))
         }
@@ -84,6 +93,9 @@ const deleteFolders = async (req, res, next) => {
 
 const createFolder = async (req, res, next) => {
     // TODO: create new folder
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { user_id } = req;
         const { name } = req.body;
@@ -106,12 +118,17 @@ const createFolder = async (req, res, next) => {
             console.log({ user })
             await user.save();
 
+            await session.commitTransaction();
+            session.endSession();
+
             res.json({
                 status: true,
                 data: folder
             });
         }
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         return next(createHttpError(500, error.message))
     }
 }

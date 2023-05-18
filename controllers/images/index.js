@@ -9,9 +9,13 @@ const { imageValidation } = require('../../utils/validation');
 
 const createImage = async (req, res, next) => {
     // TODO: create a new image and save it with the user preferred upload quality using sharp
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { user_id } = req;
         const { folder_id, name, tags, image } = req.body;
+
         await imageValidation.imageSchema.validate({ folder_id, name, tags, image })
             .then(async () => {
                 if (!mongoose.Types.ObjectId.isValid(folder_id)) {
@@ -43,6 +47,9 @@ const createImage = async (req, res, next) => {
                 await folder.save();
                 await user.save();
 
+                await session.commitTransaction();
+                session.endSession();
+
                 return res.json({
                     status: true,
                     data: imageInstance
@@ -52,15 +59,21 @@ const createImage = async (req, res, next) => {
                 return next(createHttpError(400, error))
             })
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         return next(createHttpError(500, error.message))
     }
 }
 
 const deleteImages = async (req, res, next) => {
     // TODO: delete list of images using req.body.images array of ids
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { user_id } = req;
         const { images, folder_id } = req.body;
+
         // validation on folder_id
         if (!folder_id) {
             return next(createHttpError(400, "folder id is required"))
@@ -80,17 +93,23 @@ const deleteImages = async (req, res, next) => {
         await user.save();
 
         // delete images from Image store
-        const deletedImages = await Image.deleteMany({ folder_id, _id: { $in: images } });
+        await Image.deleteMany({ folder_id, _id: { $in: images } });
 
         // delete images ids from the folder document images list
         const folder = await Folder.findById(folder_id);
         folder.images = [...folder.images.filter(id => !images.includes(id.toString()))];
         folder.save();
 
+        await session.commitTransaction();
+        session.endSession();
+
         res.json({
             status: true,
         })
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+
         if (error.name === "CastError") {
             return next(createHttpError(400, "invalid folder id in the delete ids list"))
         }
@@ -110,6 +129,9 @@ const deleteImages = async (req, res, next) => {
 
 const moveImages = async (req, res, next) => {
     // TODO: move list of images using req.body.images array of ids from the target_folder to the destination_folder
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { user_id } = req;
         const { images, destination_folder_id, source_folder_id } = req.body;
@@ -150,6 +172,9 @@ const moveImages = async (req, res, next) => {
                 { folder_id: new mongoose.Types.ObjectId(destination_folder_id) }
             );
 
+            await session.commitTransaction();
+            session.endSession();
+
             return res.json({
                 status: true,
             })
@@ -157,6 +182,8 @@ const moveImages = async (req, res, next) => {
             return next(createHttpError(400, error))
         })
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         return next(createHttpError(500, error.message))
     }
 }
@@ -194,7 +221,7 @@ const findImageById = async (req, res, next) => {
             return next(createHttpError(400, "Invalid image id"))
         }
 
-        const image = await Image.findById(image_id);
+        const image = await Image.findOne({ _id: image_id, user_id });
         if (!image) {
             return next(createHttpError(404, "image not found"))
         }
