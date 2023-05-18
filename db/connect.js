@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const MONGO_URI =
-    `mongodb+srv://${process.env.MONGO_DB_USERNAME}:${process.env.MONGO_DB_PASSWORD}@google-photos.yuwz1gi.mongodb.net/?retryWrites=true&w=majority`
+    `mongodb+srv://${process.env.MONGO_DB_USERNAME}:${process.env.MONGO_DB_PASSWORD}@google-photos.yuwz1gi.mongodb.net/google-photos?retryWrites=true&w=majority`
 
 const PORT = process.env.PORT || 8080;
 
