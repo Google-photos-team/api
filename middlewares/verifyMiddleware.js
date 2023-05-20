@@ -1,35 +1,29 @@
 const verifyToken = require('../helpers/verifyToken');
 const User = require('../db/Schemas/user');
+const createHttpError = require('http-errors');
 
 const verifyMiddleware = async (req, res, next) => {
-  if (!req.url.startsWith("/auth") || req.url.startsWith("/auth/reset-password") || req.url.startsWith("/auth/token")) {
-      // TODO: Check on the auth token and get the user_id then add header in request include the user id
-      try{
-          const token = req.headers.authorization?.split(" ")[1];
+    // TODO: Check on the auth token and get the user_id then add header in request include the user id
+    const token = req.headers.authorization?.split(" ")[1];
 
-          if(!token){
-              const err = new Error("THERE_IS_NO_TOKEN_PASSED")
-              err.name = "INVALID_HEADER"
-              err.status = 400;
-              throw err;
-          }
-          const verified = await verifyToken(token);
-          const existUser = await User.exists({_id:verified})
-          if(existUser){
-              req.user_id = verified;
-          }else{
-              const err = new Error("INVALID_TOKEN")
-              err.name = "INVALID";
-              err.status = 400;
-              throw err;
-          }
+    if (!token) {
+        return next(createHttpError(401, "you need to login before send this request (there is no token passed)"))
+    }
 
-      }catch(error){
-          next(error)          
-      }
+    try {
+        const user_id = await verifyToken(token);
+        const existUser = await User.exists({ _id: user_id });
 
-  }
-  next();
+        if (existUser) {
+            req.user_id = user_id;
+            next();
+        } else {
+            return next(createHttpError(401, "invalid token"))
+        }
+    } catch (error) {
+        console.log(error)
+        return next(createHttpError(401, "invalid token"))
+    }
 }
 
 module.exports = verifyMiddleware

@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-// const verifyToken = require('../../helpers/verifyToken');
+
+const verifyMiddleware = require('../../middlewares/verifyMiddleware');
+router.use(verifyMiddleware);
+
 // controllers
 const { ProfileController } = require('../../controllers');
 
