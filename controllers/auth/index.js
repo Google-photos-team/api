@@ -73,31 +73,11 @@ const signup = async (req, res, next) => {
     }
 }
 
-const token = async (req, res, next) => {
-    // TODO: get data by token "for stay logged in users"
-    try {
-        const user = await User.findById(req.user_id);
-        return res.json({
-            status: true,
-            data: {
-                username: user.username,
-                avatar: user.avatar,
-            }
-        })
-    } catch (error) {
-        return next(createHttpError(500, error.message))
-    }
-
-}
-
 const resetPassword = async (req, res, next) => {
     // TODO: Check the db if the old_password equal current then change the value to the new_password
     try {
         const { old_password, new_password } = req.body;
         const user = await User.findById(req.user_id);
-        if (!user) {
-            return next(createHttpError(404, "invalid token"))
-        }
 
         if (sha256(old_password) === user.password) {
             await authValidation.resetPasswordSchema.validate({ password: new_password })

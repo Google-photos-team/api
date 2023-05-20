@@ -12,9 +12,6 @@ const getProfile = async (req, res, next) => {
   const { user_id } = req;
   try {
     const user = await User.findById(user_id, "username avatar");
-    if (!user) {
-      return next(createHttpError(404, "invalid token"))
-    }
 
     res.json({
       status: true,
