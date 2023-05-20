@@ -103,6 +103,5 @@ const resetPassword = async (req, res, next) => {
 module.exports = {
     login,
     signup,
-    token,
     resetPassword
 }
