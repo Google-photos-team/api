@@ -3,12 +3,12 @@ const router = express.Router();
 // controllers
 const { AuthController } = require('../../controllers');
 
+const verifyMiddleware = require('../../middlewares/verifyMiddleware');
+
 router.post('/signup', AuthController.signup)
 
 router.post('/login', AuthController.login)
 
-router.post('/token', AuthController.token)
-
-router.post('/reset-password', AuthController.resetPassword)
+router.post('/reset-password', verifyMiddleware ,AuthController.resetPassword)
 
 module.exports = router
