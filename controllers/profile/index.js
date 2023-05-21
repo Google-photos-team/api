@@ -55,38 +55,36 @@ const updateProfile = async (req, res, next) => {
 
   try {
     const user = await User.findById(user_id, "username avatar");
-    profileValidation.updateSchema.validate({ username })
-      .then(async () => {
-        // first condition to check if the username not updated so we don't mack DB query
-        if (username && username !== user.username) {
+    if (username && username !== user.username) {
+      await profileValidation.updateSchema.validate({ username })
+        .then(async() =>{
           const isExist = await User.exists({ username });
           if (isExist) {
             return next(createHttpError(409, "user already exist"))
           }
-        }
+        }).catch((error) => {
+          return next(createHttpError(400, error))
+        })
+    }
 
-        const newValues = {};
-        if (username && username !== user.username) {
-          newValues.username = username
-        };
+    const newValues = {};
+    if (username && username !== user.username) {
+      newValues.username = username
+    };
 
-        if (typeof avatar === "string" && avatar !== user.avatar) {
-          newValues.avatar = avatar
-        };
+    if (typeof avatar === "string" && avatar !== user.avatar) {
+      newValues.avatar = avatar
+    };
 
-        const updatedUser = await User.findByIdAndUpdate(user_id, newValues, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(user_id, newValues, { new: true });
 
-        res.json({
-          status: true,
-          data: {
-            username: updatedUser.username,
-            avatar: updatedUser.avatar,
-          }
-        });
-      }).catch((error) => {
-        return next(createHttpError(400, error))
-      });
-
+    res.json({
+      status: true,
+      data: {
+        username: updatedUser.username,
+        avatar: updatedUser.avatar,
+      }
+    });
 
   } catch (error) {
     return next(createHttpError(500, error.message))
